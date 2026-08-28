@@ -55,7 +55,6 @@ flowchart LR
 
         subgraph Core["运行时"]
             Conv["对话扁平化\n(Anthropic / Responses -> duck.ai 提示)"]
-            Router2["工具路由\n(意图 -> tool_use)"]
             Client2["DuckAI 客户端\n(令牌获取 · SSE 聊天)"]
             Pool["Chrome 会话池\n(按模型 · 轮换)"]
         end
@@ -63,9 +62,7 @@ flowchart LR
 
     Client --> Router
     Router --> Conv
-    Router --> Router2
     Conv --> Client2
-    Router2 -. tool_use (不调用) .-> Client
     Client2 --> Pool
     Pool --> Upstream
     Upstream --> Pool
@@ -185,7 +182,9 @@ tools=[{"name":"Read","description":"读取文件",
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left)](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
+[⭐ 查看 Star History](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
+
+> GitHub 于 2026-06-30 将其 stargazers API 限制为仅仓库管理员/协作者可访问，因此 star-history 的公开图片接口已无法为任何仓库渲染曲线图。若要在本 README 嵌入实时图，请到 [star-history.com](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left) 生成带 token 的片段（查询仓库 → **Embed** → 粘贴只读 PAT），并把上面的链接替换为 `https://api.star-history.com/image?repos=czpGhost/DuckAI2API&type=Date&token=...` 图片地址。
 
 ## ⚠️ 免责声明
 

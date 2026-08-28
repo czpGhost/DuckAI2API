@@ -56,7 +56,6 @@ flowchart LR
 
         subgraph Core["Runtime"]
             Conv["Conversation flatten\n(Anthropic / Responses -> duck.ai prompt)"]
-            Router2["Tool Router\n(intent -> tool_use)"]
             Client2["DuckAI Client\n(token fetch · SSE chat)"]
             Pool["Chrome Session Pool\n(per-model · rotation)"]
         end
@@ -64,9 +63,7 @@ flowchart LR
 
     Client --> Router
     Router --> Conv
-    Router --> Router2
     Conv --> Client2
-    Router2 -. tool_use (no call) .-> Client
     Client2 --> Pool
     Pool --> Upstream
     Upstream --> Pool
@@ -188,7 +185,9 @@ All chat/Anthropic/Responses logic lives in `main.py`; the Duck.ai transport liv
 
 ## ⭐ Star History
 
-[![Star History Chart](https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left)](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
+[⭐ View Star History](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
+
+> GitHub restricted its stargazers API (2026-06-30) to repo admins/collaborators only, so star-history's public image endpoint can no longer render the chart for any repo. To embed a live chart in this README, generate a tokened snippet at [star-history.com](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left) (query the repo → **Embed** → paste a read-only PAT) and replace the link above with the `https://api.star-history.com/image?repos=czpGhost/DuckAI2API&type=Date&token=...` URL.
 
 ## ⚠️ Disclaimer
 
