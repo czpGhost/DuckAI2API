@@ -44,32 +44,6 @@ The model id is sent as `model: "<model>"` in the JSON body. The relay maps frie
 | 🔐 **Optional key wall** | Set `DUCKAI_API_KEY`; present `Authorization: Bearer <key>` |
 | 🪟 **Cross-platform** | Windows · macOS · Linux |
 
-## 🏗️ Architecture
-
-```mermaid
-flowchart LR
-    Client["🖥️ Client / SDK\n(OpenAI · Anthropic · Responses)"]
-    Upstream["☁️ Duck.ai"]
-
-    subgraph DuckAI2API["DuckAI2API (FastAPI + Playwright)"]
-        Router["FastAPI Router\n(/v1/chat/completions · /v1/messages · /v1/responses)"]
-
-        subgraph Core["Runtime"]
-            Conv["Conversation flatten\n(Anthropic / Responses -> duck.ai prompt)"]
-            Client2["DuckAI Client\n(token fetch · SSE chat)"]
-            Pool["Chrome Session Pool\n(per-model · rotation)"]
-        end
-    end
-
-    Client --> Router
-    Router --> Conv
-    Conv --> Client2
-    Client2 --> Pool
-    Pool --> Upstream
-    Upstream --> Pool
-    Client2 --> Client
-```
-
 ## 📦 Models
 
 | id                  | label                     |
@@ -183,11 +157,6 @@ tools=[{"name":"Read","description":"Read a file",
 
 All chat/Anthropic/Responses logic lives in `main.py`; the Duck.ai transport lives in `duckai.py`.
 
-## ⭐ Star History
-
-[⭐ View Star History](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
-
-> GitHub restricted its stargazers API (2026-06-30) to repo admins/collaborators only, so star-history's public image endpoint can no longer render the chart for any repo. To embed a live chart in this README, generate a tokened snippet at [star-history.com](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left) (query the repo → **Embed** → paste a read-only PAT) and replace the link above with the `https://api.star-history.com/image?repos=czpGhost/DuckAI2API&type=Date&token=...` URL.
 
 ## ⚠️ Disclaimer
 

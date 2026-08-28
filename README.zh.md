@@ -43,32 +43,6 @@ Duck.ai 没有公开 API。它的聊天走以下接口：
 | 🔐 **可选 Key 鉴权** | 设置 `DUCKAI_API_KEY`，请求带上 `Authorization: Bearer <key>` |
 | 🪟 **跨平台** | Windows · macOS · Linux |
 
-## 🏗️ 架构
-
-```mermaid
-flowchart LR
-    Client["🖥️ 客户端 / SDK\n(OpenAI · Anthropic · Responses)"]
-    Upstream["☁️ Duck.ai"]
-
-    subgraph DuckAI2API["DuckAI2API (FastAPI + Playwright)"]
-        Router["FastAPI 路由\n(/v1/chat/completions · /v1/messages · /v1/responses)"]
-
-        subgraph Core["运行时"]
-            Conv["对话扁平化\n(Anthropic / Responses -> duck.ai 提示)"]
-            Client2["DuckAI 客户端\n(令牌获取 · SSE 聊天)"]
-            Pool["Chrome 会话池\n(按模型 · 轮换)"]
-        end
-    end
-
-    Client --> Router
-    Router --> Conv
-    Conv --> Client2
-    Client2 --> Pool
-    Pool --> Upstream
-    Upstream --> Pool
-    Client2 --> Client
-```
-
 ## 📦 模型
 
 | id                  | 名称                      |
@@ -180,11 +154,6 @@ tools=[{"name":"Read","description":"读取文件",
 
 所有聊天/Anthropic/Responses 逻辑在 `main.py`；Duck.ai 传输在 `duckai.py`。
 
-## ⭐ Star History
-
-[⭐ 查看 Star History](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
-
-> GitHub 于 2026-06-30 将其 stargazers API 限制为仅仓库管理员/协作者可访问，因此 star-history 的公开图片接口已无法为任何仓库渲染曲线图。若要在本 README 嵌入实时图，请到 [star-history.com](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left) 生成带 token 的片段（查询仓库 → **Embed** → 粘贴只读 PAT），并把上面的链接替换为 `https://api.star-history.com/image?repos=czpGhost/DuckAI2API&type=Date&token=...` 图片地址。
 
 ## ⚠️ 免责声明
 
