@@ -1,16 +1,30 @@
-# DuckAI2API
 
-> 🇬🇧 English | [🇨🇳 中文](./README.zh.md)
+<div align="center">
 
-OpenAI / Anthropic / Responses compatible API server backed by **Duck.ai** (`https://duck.ai/`) — including **GPT-5.6 Luna** reasoning. Built from a js-reverse analysis of Duck.ai's live web protocol (XHR + SSE, no official API), and re-verified after every major site change.
+# 🦆 DuckAI2API
 
-The server speaks three protocols at once, so it works as a drop-in backend for **Claude Code**, the **OpenAI SDK**, and the **OpenAI Responses API**. All chat is streamed from the real Duck.ai SSE feed.
+**Turn Duck.ai into an OpenAI / Anthropic / Responses compatible API — for free.**
 
-> Works on **Windows, macOS, and Linux** — see [Requirements](#requirements).
+[![License](https://img.shields.io/github/license/czpGhost/DuckAI2API.svg)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/czpGhost/DuckAI2API.svg)](https://github.com/czpGhost/DuckAI2API/stargazers)
+[![Forks](https://img.shields.io/github/forks/czpGhost/DuckAI2API.svg)](https://github.com/czpGhost/DuckAI2API/network/members)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-2EA043.svg)](#requirements)
+[![Models](https://img.shields.io/badge/Models-9%20free-FF6B35.svg)](#models)
 
-## Why this exists
+[🇨🇳 中文](./README.zh.md) · [🇬🇧 English](./README.md)
 
-Duck.ai has no public API. Its chat runs over:
+</div>
+
+---
+
+A relay that speaks **three** LLM protocols at once, backed by **Duck.ai** (`https://duck.ai/`) — no API key, no payment. Built from a js-reverse analysis of Duck.ai's live web protocol (XHR + SSE, no official API), re-verified after every major site change.
+
+Works as a drop-in backend for **Claude Code**, the **OpenAI SDK**, and the **OpenAI Responses API**. All chat is streamed straight from Duck.ai's real SSE feed.
+
+## ✨ Why
+
+Duck.ai has **no public API**. Its chat runs over:
 
 - `POST https://duck.ai/duckchat/api/status` — fetch `server_vqd_02` (X-Vqd-4 token)
 - `POST https://duck.ai/duckchat/api/refs` — fetch `vqd` (X-Vqd-4 token for chat)
@@ -18,20 +32,62 @@ Duck.ai has no public API. Its chat runs over:
 
 The model id is sent as `model: "<model>"` in the JSON body. The relay maps friendly model names to these ids.
 
-## Features
+## 🚀 Features
 
-- **GPT-5.6 Luna** plus 8 more free models.
-- **Three protocols**: `/v1/chat/completions` (OpenAI), `/v1/messages` (Anthropic), `/v1/responses` (OpenAI Responses).
-- **Real streaming** on every protocol, sourced from Duck.ai's SSE.
-- **Agent tool-loop support**: Claude Code and compatible agents send `tools`; the relay synthesizes the `tool_use` / `tool_calls` / `function_call` block from the user's intent (Duck.ai cannot emit tool calls), the agent executes locally, returns the result back, and the relay feeds it to Duck.ai as grounded context. **No command is ever executed server-side.**
-- **Session rotation**: per-model headless-Chrome session, auto-recreated on rate-limit / crash.
-- **Optional API-key wall**: set `DUCKAI_API_KEY` and present `Authorization: Bearer <key>`.
+| | Capability |
+|---|---|
+| 🧠 **9 free models** | GPT-5.6 Luna, GPT-5.4 (+mini), Claude Sonnet/Haiku/Opus 4.x, Mistral Small, gpt-oss 120B, Gemma 4 31B |
+| 🔌 **Triple protocol** | `/v1/chat/completions` (OpenAI), `/v1/messages` (Anthropic), `/v1/responses` (OpenAI Responses) |
+| 🌊 **Real streaming** | Sourced from Duck.ai's SSE on every protocol |
+| 🤖 **Agent tool-loop** | Synthesizes `tool_use` / `tool_calls` / `function_call` from intent; feeds `tool_result` back to Duck.ai. **No command executed server-side** |
+| 🔄 **Session rotation** | Per-model headless-Chrome session, auto-recreated on rate-limit / crash |
+| 🔐 **Optional key wall** | Set `DUCKAI_API_KEY`; present `Authorization: Bearer <key>` |
+| 🪟 **Cross-platform** | Windows · macOS · Linux |
 
-## Models
+## 🏗️ Architecture
+
+```mermaid
+flowchart LR
+    Client["🖥️ Client / SDK\n(OpenAI · Anthropic · Responses)"]
+    Upstream["☁️ Duck.ai"]
+
+    subgraph DuckAI2API["DuckAI2API (FastAPI + Playwright)"]
+        Router["FastAPI Router\n(/v1/chat/completions · /v1/messages · /v1/responses)"]
+
+        subgraph Core["Runtime"]
+            Conv["Conversation flatten\n(Anthropic / Responses -> duck.ai prompt)"]
+            Router2["Tool Router\n(intent -> tool_use)"]
+            Client2["DuckAI Client\n(token fetch · SSE chat)"]
+            Pool["Chrome Session Pool\n(per-model · rotation)"]
+        end
+    end
+
+    Client --> Router
+    Router --> Conv
+    Router --> Router2
+    Conv --> Client2
+    Router2 -. tool_use (no call) .-> Client
+    Client2 --> Pool
+    Pool --> Upstream
+    Upstream --> Pool
+    Client2 --> Client
+```
+
+## 🎯 Compatibility matrix
+
+| Level | Client | Status |
+| --- | --- | --- |
+| P0 | Claude Code (`ANTHROPIC_BASE_URL`) | ✅ |
+| P0 | Anthropic SDK (`/v1/messages`) | ✅ |
+| P0 | OpenAI SDK — chat + responses | ✅ |
+| P0 | Vercel AI SDK (openai-compatible) | ✅ |
+| P1 | OpenWebUI / LobeChat (OpenAI-compatible) | ✅ |
+
+## 📦 Models
 
 | id                  | label                     |
 |---------------------|---------------------------|
-| `gpt-5.6-luna`      | GPT-5.6 Luna               |
+| `gpt-5.6-luna`      | GPT-5.6 Luna              |
 | `gpt-5.4`           | GPT-5.4                   |
 | `gpt-5.4-mini`      | GPT-5.4 mini              |
 | `claude-sonnet-4-6` | Claude Sonnet 4.6         |
@@ -41,18 +97,18 @@ The model id is sent as `model: "<model>"` in the JSON body. The relay maps frie
 | `tinfoil/gpt-oss-120b` | gpt-oss 120B          |
 | `tinfoil/gemma4-31b`   | Gemma 4 31B           |
 
-Unknown model ids are passed through verbatim (so future Duck.ai models work without a code change). Common aliases (`gpt-5.6`, `claude-haiku`, `o3-mini`, …) are resolved to the table above.
+Unknown model ids pass through verbatim (future Duck.ai models work without a code change). Common aliases (`gpt-5.6`, `claude-haiku`, `o3-mini`, …) resolve to the table above.
 
-## Requirements
+## 🛠️ Requirements
 
 - **Python** ≥ 3.10
-- **Google Chrome (stable)** installed on the host. The relay drives Duck.ai through a real Chrome instance (`Playwright` `channel="chrome"`); the bundled Playwright Chromium is fingerprint-banned by Duck.ai, so system Chrome is required. You do **not** need `playwright install chromium`.
+- **Google Chrome (stable)** on the host. The relay drives Duck.ai through a real Chrome instance (`Playwright` `channel="chrome"`); the bundled Playwright Chromium is fingerprint-banned by Duck.ai, so system Chrome is required. You do **not** need `playwright install chromium`.
   - Windows: install from <https://www.google.com/chrome/>
-  - macOS: `brew install --cask google-chrome` (or download from google.com/chrome)
+  - macOS: `brew install --cask google-chrome`
   - Linux (Debian/Ubuntu): `sudo apt-get install google-chrome-stable`
-- If Chrome is at a non-default location, point `DUCKAI_CHROME_PATH` at the binary.
+- If Chrome is elsewhere, point `DUCKAI_CHROME_PATH` at the binary.
 
-## Install & run
+## ⚡ Quick start
 
 ```bash
 # 1. venv
@@ -64,15 +120,15 @@ python3 -m venv .venv
 pip install -r requirements.txt
 
 # 3. (optional) config
-cp .env.example .env          # edit if you want an API key, a proxy, etc.
+cp .env.example .env          # API key, proxy, etc.
 
 # 4. serve
 python -m uvicorn main:app --host 0.0.0.0 --port 8080
 ```
 
-The server listens on `http://localhost:8080` (override with `PORT`).
+Server listens on `http://localhost:8080` (override with `PORT`).
 
-## Configuration
+## ⚙️ Configuration
 
 All settings are optional and read from environment (`.env` via `python-dotenv`).
 
@@ -81,14 +137,14 @@ All settings are optional and read from environment (`.env` via `python-dotenv`)
 | `DUCKAI_API_KEY`        | Bearer token required on all `/v1` requests. **Empty = open access.**                         | *(empty)*            |
 | `DUCKAI_BASE`           | Duck.ai host.                                                                                 | `https://duck.ai`    |
 | `DUCKAI_MODEL`          | Default model when the client omits one.                                                      | `gpt-5.6-luna`       |
-| `DUCKAI_NEW_CHAT`       | `1` = fresh chat per request (stateless, OpenAI/Anthropic-like); `0` = keep session history.  | `0`                  |
-| `DUCKAI_PROXIES`        | Comma-separated proxy pool; the relay rotates past per-IP `ERR_BN_LIMIT` bans.                | *(none)*             |
+| `DUCKAI_NEW_CHAT`       | `1` = fresh chat per request (stateless); `0` = keep session history.                         | `0`                  |
+| `DUCKAI_PROXIES`        | Comma-separated proxy pool; rotates past per-IP `ERR_BN_LIMIT` bans.                          | *(none)*             |
 | `DUCKAI_PROXY`          | Single proxy (alternative to the pool).                                                       | *(none)*             |
 | `DUCKAI_MAX_CONCURRENCY` | Max in-flight requests per proxy before queuing.                                            | `2`                  |
 | `DUCKAI_CHROME_PATH`    | Override the path to the Google Chrome binary (auto-detected per OS otherwise).               | per-OS default       |
 | `PORT`                  | Server port.                                                                                  | `8080`               |
 
-## Usage
+## 💡 Usage
 
 ### OpenAI SDK (streaming)
 
@@ -131,7 +187,7 @@ tools=[{"name":"Read","description":"Read a file",
 # agent runs Read locally, returns tool_result; relay answers using that content.
 ```
 
-## Files
+## 📂 Files
 
 - `duckai.py` — low-level Duck.ai client (token fetch + SSE chat, Chrome session mgmt, rotation). Exposes `MODEL_LABELS`, `resolve_model`, `DuckAISession`.
 - `main.py` — FastAPI app: the three protocol endpoints, request schemas, model routing, conversation flattening, and tool-loop wiring.
@@ -140,6 +196,16 @@ tools=[{"name":"Read","description":"Read a file",
 
 All chat/Anthropic/Responses logic lives in `main.py`; the Duck.ai transport lives in `duckai.py`.
 
-## Disclaimer
+## ⭐ Star History
+
+<a href="https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&theme=dark&legend=top-left" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
+    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
+  </picture>
+</a>
+
+## ⚠️ Disclaimer
 
 Not affiliated with DuckDuckGo. For educational/personal use only; respect Duck.ai's terms of service. Use at your own rate-limit risk.

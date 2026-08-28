@@ -1,14 +1,27 @@
-# DuckAI2API
+<div align="center">
 
-> 🇨🇳 中文 | [🇬🇧 English](./README.md)
+# 🦆 DuckAI2API
 
-将 **Duck.ai**（`https://duck.ai/`）转换为兼容 OpenAI / Anthropic / Responses 的 API 服务——包含 **GPT-5.6 Luna** 推理。基于对 Duck.ai 实时 Web 协议（XHR + SSE，无官方 API）的反向分析构建，并在每次网站大改后重新验证。
+**将 Duck.ai 变成兼容 OpenAI / Anthropic / Responses 的 API —— 免费。**
 
-服务同时支持三种协议，可作为 **Claude Code**、**OpenAI SDK**、**OpenAI Responses API** 的即插即用后端。所有聊天均来自 Duck.ai 真实的 SSE 流。
+[![License](https://img.shields.io/github/license/czpGhost/DuckAI2API.svg)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/czpGhost/DuckAI2API.svg)](https://github.com/czpGhost/DuckAI2API/stargazers)
+[![Forks](https://img.shields.io/github/forks/czpGhost/DuckAI2API.svg)](https://github.com/czpGhost/DuckAI2API/network/members)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB.svg)](https://www.python.org)
+[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-2EA043.svg)](#环境要求)
+[![Models](https://img.shields.io/badge/Models-9%20free-FF6B35.svg)](#模型)
 
-> 支持 **Windows、macOS、Linux** —— 见 [环境要求](#环境要求)。
+[🇨🇳 中文](./README.zh.md) · [🇬🇧 English](./README.md)
 
-## 为什么做这个
+</div>
+
+---
+
+一个同时讲 **三种** LLM 协议的中转服务，后端是 **Duck.ai**（`https://duck.ai/`）——无需 API Key，无需付费。基于对 Duck.ai 实时 Web 协议（XHR + SSE，无官方 API）的反向分析构建，并在每次网站大改后重新验证。
+
+可作为 **Claude Code**、**OpenAI SDK**、**OpenAI Responses API** 的即插即用后端。所有聊天均来自 Duck.ai 真实的 SSE 流。
+
+## ✨ 为什么做这个
 
 Duck.ai 没有公开 API。它的聊天走以下接口：
 
@@ -18,20 +31,62 @@ Duck.ai 没有公开 API。它的聊天走以下接口：
 
 模型 id 在 JSON 体中以 `model: "<model>"` 发送。中转服务会把友好的模型名映射到这些 id。
 
-## 功能
+## 🚀 功能
 
-- **GPT-5.6 Luna** 外加 8 个免费模型。
-- **三种协议**：`/v1/chat/completions`（OpenAI）、`/v1/messages`（Anthropic）、`/v1/responses`（OpenAI Responses）。
-- **真实流式**：所有协议均从 Duck.ai 的 SSE 流式输出。
-- **Agent 工具循环支持**：Claude Code 及兼容 agent 发送 `tools`；中转服务根据用户意图合成 `tool_use` / `tool_calls` / `function_call` 块（Duck.ai 自身无法发出工具调用），agent 在本地执行并将结果返回，中转服务再把结果作为上下文喂给 Duck.ai 得到有依据的最终回答。**服务端绝不执行任何命令。**
-- **会话轮换**：按模型维护无头 Chrome 会话，在限流/崩溃时自动重建。
-- **可选 API Key 鉴权**：设置 `DUCKAI_API_KEY`，请求时带上 `Authorization: Bearer <key>`。
+| | 能力 |
+|---|---|
+| 🧠 **9 个免费模型** | GPT-5.6 Luna、GPT-5.4（+mini）、Claude Sonnet/Haiku/Opus 4.x、Mistral Small、gpt-oss 120B、Gemma 4 31B |
+| 🔌 **三协议** | `/v1/chat/completions`（OpenAI）、`/v1/messages`（Anthropic）、`/v1/responses`（OpenAI Responses） |
+| 🌊 **真实流式** | 所有协议均从 Duck.ai 的 SSE 流式输出 |
+| 🤖 **Agent 工具循环** | 根据用户意图合成 `tool_use` / `tool_calls` / `function_call`；把 `tool_result` 回传给 Duck.ai。**服务端绝不执行命令** |
+| 🔄 **会话轮换** | 按模型维护无头 Chrome 会话，限流/崩溃时自动重建 |
+| 🔐 **可选 Key 鉴权** | 设置 `DUCKAI_API_KEY`，请求带上 `Authorization: Bearer <key>` |
+| 🪟 **跨平台** | Windows · macOS · Linux |
 
-## 模型
+## 🏗️ 架构
+
+```mermaid
+flowchart LR
+    Client["🖥️ 客户端 / SDK\n(OpenAI · Anthropic · Responses)"]
+    Upstream["☁️ Duck.ai"]
+
+    subgraph DuckAI2API["DuckAI2API (FastAPI + Playwright)"]
+        Router["FastAPI 路由\n(/v1/chat/completions · /v1/messages · /v1/responses)"]
+
+        subgraph Core["运行时"]
+            Conv["对话扁平化\n(Anthropic / Responses -> duck.ai 提示)"]
+            Router2["工具路由\n(意图 -> tool_use)"]
+            Client2["DuckAI 客户端\n(令牌获取 · SSE 聊天)"]
+            Pool["Chrome 会话池\n(按模型 · 轮换)"]
+        end
+    end
+
+    Client --> Router
+    Router --> Conv
+    Router --> Router2
+    Conv --> Client2
+    Router2 -. tool_use (不调用) .-> Client
+    Client2 --> Pool
+    Pool --> Upstream
+    Upstream --> Pool
+    Client2 --> Client
+```
+
+## 🎯 兼容矩阵
+
+| 级别 | 客户端 | 状态 |
+| --- | --- | --- |
+| P0 | Claude Code（`ANTHROPIC_BASE_URL`） | ✅ |
+| P0 | Anthropic SDK（`/v1/messages`） | ✅ |
+| P0 | OpenAI SDK —— chat + responses | ✅ |
+| P0 | Vercel AI SDK（openai-compatible） | ✅ |
+| P1 | OpenWebUI / LobeChat（OpenAI 兼容） | ✅ |
+
+## 📦 模型
 
 | id                  | 名称                      |
 |---------------------|---------------------------|
-| `gpt-5.6-luna`      | GPT-5.6 Luna               |
+| `gpt-5.6-luna`      | GPT-5.6 Luna              |
 | `gpt-5.4`           | GPT-5.4                   |
 | `gpt-5.4-mini`      | GPT-5.4 mini              |
 | `claude-sonnet-4-6` | Claude Sonnet 4.6         |
@@ -41,18 +96,18 @@ Duck.ai 没有公开 API。它的聊天走以下接口：
 | `tinfoil/gpt-oss-120b` | gpt-oss 120B          |
 | `tinfoil/gemma4-31b`   | Gemma 4 31B           |
 
-未知的模型 id 会原样透传（因此未来的 Duck.ai 模型无需改代码即可使用）。常用别名（`gpt-5.6`、`claude-haiku`、`o3-mini` 等）会自动解析到上表。
+未知的模型 id 会原样透传（未来的 Duck.ai 模型无需改代码即可用）。常用别名（`gpt-5.6`、`claude-haiku`、`o3-mini` 等）会自动解析到上表。
 
-## 环境要求
+## 🛠️ 环境要求
 
 - **Python** ≥ 3.10
-- 主机上安装 **Google Chrome（稳定版）**。中转服务通过真实 Chrome 实例（`Playwright` 的 `channel="chrome"`）驱动 Duck.ai；Playwright 自带的 Chromium 会被 Duck.ai 指纹封禁，因此必须使用系统 Chrome。你**不需要**执行 `playwright install chromium`。
+- 主机上安装 **Google Chrome（稳定版）**。中转服务通过真实 Chrome 实例（`Playwright` 的 `channel="chrome"`）驱动 Duck.ai；Playwright 自带的 Chromium 会被 Duck.ai 指纹封禁，因此必须用系统 Chrome。你**不需要**执行 `playwright install chromium`。
   - Windows：从 <https://www.google.com/chrome/> 安装
-  - macOS：`brew install --cask google-chrome`（或从 google.com/chrome 下载）
+  - macOS：`brew install --cask google-chrome`
   - Linux（Debian/Ubuntu）：`sudo apt-get install google-chrome-stable`
 - 如果 Chrome 不在默认路径，用 `DUCKAI_CHROME_PATH` 指向二进制文件。
 
-## 安装与运行
+## ⚡ 快速开始
 
 ```bash
 # 1. 虚拟环境
@@ -64,7 +119,7 @@ python3 -m venv .venv
 pip install -r requirements.txt
 
 # 3. （可选）配置
-cp .env.example .env          # 如需 API Key、代理等再编辑
+cp .env.example .env          # API Key、代理等
 
 # 4. 启动
 python -m uvicorn main:app --host 0.0.0.0 --port 8080
@@ -72,7 +127,7 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8080
 
 服务监听 `http://localhost:8080`（可用 `PORT` 覆盖）。
 
-## 配置
+## ⚙️ 配置
 
 所有配置均为可选，从环境变量读取（通过 `python-dotenv` 加载 `.env`）。
 
@@ -81,14 +136,14 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8080
 | `DUCKAI_API_KEY`      | 所有 `/v1` 请求所需的 Bearer 令牌。**留空 = 开放访问。**                                      | *(空)*               |
 | `DUCKAI_BASE`         | Duck.ai 主机地址。                                                                             | `https://duck.ai`    |
 | `DUCKAI_MODEL`        | 客户端未指定时的默认模型。                                                                     | `gpt-5.6-luna`       |
-| `DUCKAI_NEW_CHAT`     | `1` = 每次请求新建对话（无状态，类 OpenAI/Anthropic）；`0` = 保留会话历史。                     | `0`                  |
-| `DUCKAI_PROXIES`      | 逗号分隔的代理池；中转服务借此轮换以绕过按 IP 的 `ERR_BN_LIMIT` 封禁。                         | *(无)*               |
+| `DUCKAI_NEW_CHAT`     | `1` = 每次请求新建对话（无状态）；`0` = 保留会话历史。                                         | `0`                  |
+| `DUCKAI_PROXIES`      | 逗号分隔的代理池；借此轮换以绕过按 IP 的 `ERR_BN_LIMIT` 封禁。                                 | *(无)*               |
 | `DUCKAI_PROXY`        | 单个代理（代理池的替代方案）。                                                                 | *(无)*               |
 | `DUCKAI_MAX_CONCURRENCY` | 每个代理在排队前的最大并发请求数。                                                        | `2`                  |
 | `DUCKAI_CHROME_PATH`  | 覆盖 Google Chrome 二进制路径（否则按系统自动探测）。                                          | 各系统默认值         |
 | `PORT`                | 服务端口。                                                                                     | `8080`               |
 
-## 使用示例
+## 💡 使用示例
 
 ### OpenAI SDK（流式）
 
@@ -129,7 +184,7 @@ tools=[{"name":"Read","description":"读取文件",
 # agent 本地执行 Read，返回 tool_result；中转服务据此作答。
 ```
 
-## 文件结构
+## 📂 文件结构
 
 - `duckai.py` — 底层 Duck.ai 客户端（令牌获取 + SSE 聊天、Chrome 会话管理、轮换）。导出 `MODEL_LABELS`、`resolve_model`、`DuckAISession`。
 - `main.py` — FastAPI 应用：三个协议端点、请求模型、模型路由、对话扁平化、工具循环接线。
@@ -138,6 +193,16 @@ tools=[{"name":"Read","description":"读取文件",
 
 所有聊天/Anthropic/Responses 逻辑在 `main.py`；Duck.ai 传输在 `duckai.py`。
 
-## 免责声明
+## ⭐ Star History
+
+<a href="https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&theme=dark&legend=top-left" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
+    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
+  </picture>
+</a>
+
+## ⚠️ 免责声明
 
 与 DuckDuckGo 无关。仅用于学习/个人用途；请遵守 Duck.ai 的服务条款。使用时自行承担限流风险。
