@@ -73,16 +73,6 @@ flowchart LR
     Client2 --> Client
 ```
 
-## 🎯 Compatibility matrix
-
-| Level | Client | Status |
-| --- | --- | --- |
-| P0 | Claude Code (`ANTHROPIC_BASE_URL`) | ✅ |
-| P0 | Anthropic SDK (`/v1/messages`) | ✅ |
-| P0 | OpenAI SDK — chat + responses | ✅ |
-| P0 | Vercel AI SDK (openai-compatible) | ✅ |
-| P1 | OpenWebUI / LobeChat (OpenAI-compatible) | ✅ |
-
 ## 📦 Models
 
 | id                  | label                     |
@@ -198,13 +188,7 @@ All chat/Anthropic/Responses logic lives in `main.py`; the Duck.ai transport liv
 
 ## ⭐ Star History
 
-<a href="https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&theme=dark&legend=top-left" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
-    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
-  </picture>
-</a>
+[![Star History Chart](https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left)](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
 
 ## ⚠️ Disclaimer
 

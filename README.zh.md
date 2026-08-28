@@ -72,16 +72,6 @@ flowchart LR
     Client2 --> Client
 ```
 
-## 🎯 兼容矩阵
-
-| 级别 | 客户端 | 状态 |
-| --- | --- | --- |
-| P0 | Claude Code（`ANTHROPIC_BASE_URL`） | ✅ |
-| P0 | Anthropic SDK（`/v1/messages`） | ✅ |
-| P0 | OpenAI SDK —— chat + responses | ✅ |
-| P0 | Vercel AI SDK（openai-compatible） | ✅ |
-| P1 | OpenWebUI / LobeChat（OpenAI 兼容） | ✅ |
-
 ## 📦 模型
 
 | id                  | 名称                      |
@@ -195,13 +185,7 @@ tools=[{"name":"Read","description":"读取文件",
 
 ## ⭐ Star History
 
-<a href="https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&theme=dark&legend=top-left" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
-    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left" />
-  </picture>
-</a>
+[![Star History Chart](https://api.star-history.com/chart?repos=czpGhost/DuckAI2API&type=date&legend=top-left)](https://www.star-history.com/?repos=czpGhost/DuckAI2API&type=date&legend=top-left)
 
 ## ⚠️ 免责声明
 
